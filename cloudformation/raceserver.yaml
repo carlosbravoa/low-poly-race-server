@@ -152,7 +152,7 @@ Resources:
           EXTRA=--no-beacon
           ENV
           chmod 600 /etc/raceserver.env
-          curl -fsSL -o /usr/local/bin/raceserver-install https://raw.githubusercontent.com/cbravo/low-poly-race-server/main/scripts/install.sh
+          curl -fsSL -o /usr/local/bin/raceserver-install https://raw.githubusercontent.com/carlosbravoa/low-poly-race-server/main/scripts/install.sh
           chmod +x /usr/local/bin/raceserver-install
           /usr/local/bin/raceserver-install "${ReleaseUrl}" "${ReleaseSha256}"
           # a weekly look for a newer tarball is left to you: rerun raceserver-install with the new URL

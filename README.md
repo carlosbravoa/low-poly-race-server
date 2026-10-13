@@ -34,7 +34,7 @@ new release: a shell on the instance, `raceserver-install NEW_URL NEW_SHA256`. T
 ## On any Linux box
 
 ```sh
-curl -fsSLO https://raw.githubusercontent.com/cbravo/low-poly-race-server/main/scripts/install.sh
+curl -fsSLO https://raw.githubusercontent.com/carlosbravoa/low-poly-race-server/main/scripts/install.sh
 sudo sh install.sh https://.../raceserver-0.1.0-linux-x86_64.tar.gz SHA256
 ```
 
