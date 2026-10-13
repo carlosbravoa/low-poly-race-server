@@ -1,4 +1,4 @@
-# The wire protocol (version 1)
+# The wire protocol (version 2)
 
 UDP, through [ENet](https://github.com/zpl-c/enet) (the single-header fork): two channels, 0 reliable (the lobby,
 the rooms, a race's start and end, penalties, chat), 1 unreliable sequenced (snapshots) or unsequenced (inputs,
@@ -33,7 +33,8 @@ implied) then the other three as i16 scaled by 32767/0.70711; `unit` a byte for 
 | 13 | ROOM_SETTINGS | RoomSettings (the host, while the room forms; everyone's ready flag is cleared) |
 
 RoomSettings: track str (the file's name without `.track`), laps u8, model u8 (0 arcade, 1 balanced, 2
-simulation), contact u8 (0 real, 1 arcade bumps, 2 ghost), aiFill bool, aiLevel u8 (0 easy, 1 medium, 2 hard).
+simulation), contact u8 (0 real, 1 arcade bumps, 2 ghost), aiFill bool, aiLevel u8 (0 easy, 1 medium, 2 hard),
+races u8 (1: one race on `track`; more: a series of that many on tracks the server draws at random).
 
 AssistSettings: steering f32, counterSteer f32, stability f32, esc f32, tcs bool, abs bool, autoShift bool,
 brakeReverse bool, speedSteer f32, steerRate f32, understeerControl f32, oversteerControl f32.
@@ -48,13 +49,15 @@ brakeReverse bool, speedSteer f32, steerRate f32, understeerControl f32, overste
 | 67 | ROOM | RoomInfo |
 | 68 | RACE_START | room u32, RoomSettings, n u8 grid entries (name str, model u8, paint u8, seat i8 or -1 for the AI, playerId u32, pace f32), mySeat i8 (-1: watching), countdown f32 |
 | 69 | SNAPSHOT | tick u32, goTick u32, phase u8 (0 countdown, 1 racing, 2 finished), countdownLeft f32, clock f64, inputLead i16, n u8 cars (CarState, in grid order) |
-| 70 | RACE_END | n u8 results (name str, position u8, finished bool, finishTime f32, bestLap f32, seat i8) |
+| 70 | RACE_END | n u8 results (name str, position u8, finished bool, finishTime f32, bestLap f32, seat i8, points u8 — a series' points for the place) |
 | 71 | PONG | stamp u32 |
 | 72 | SAY | who str, text str |
 | 73 | PENALTY | kind u8 (0 reset, 1 big crash, 2 heavy crash, 3 third big crash), g f32, hold f32 s, bigCount u8 |
 
 RoomInfo: id u32, host u32 (a player id), RoomSettings, phase u8 (0 forming, 1 loading, 2 racing, 3 results),
-n u8 members (id u32, name str, model u8, paint u8, AssistSettings, ready bool, seat i8), lap u8, leader str.
+n u8 members (id u32, name str, model u8, paint u8, AssistSettings, ready bool, seat i8), lap u8, leader str,
+race u8 (a series: races run so far), next str (a series: the next race's track), n u8 standings (name str,
+points u16, wins u8, human bool), best first.
 
 CarState (78 bytes): pos, quat, vel, angvel, steer sunit (road-wheel angle, rad), four wheel speeds i16 (×20
 rad/s), four suspension compressions u8 (×500 m), contact u8 (bit i: wheel i on the ground), surface u8, engine
