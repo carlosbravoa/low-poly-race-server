@@ -53,16 +53,38 @@ or `docker compose -f docker/docker-compose.yml up -d` with `RELEASE_URL` set. E
 `PORT`, `ROOMS`, `SNAPSHOT_HZ` (60 on a LAN), `EXTRA` (more options). The LAN beacon (the game finding the server
 by itself) needs `--network host`.
 
-## On a LAN, no install
+## On a LAN
 
-Unpack the tarball anywhere and run it:
+Two ways. Both are found by the other games by themselves: a server announces itself on the network once a
+second, and every game on it lists it under PLAY → ONLINE → *On the LAN*.
+
+**From inside the game, no server at all.** One person: PLAY → ONLINE, *Host on this PC* → YES, then
+**HOST AND ENTER THE LOBBY**. A server runs inside their game (snapshots at 60 Hz, the LAN rate) and they land in
+its lobby, where they OPEN A ROOM. The page shows this PC's address (`192.168.x.y:7777`) to read out to anyone
+whose game does not list the server. Everyone else: PLAY → ONLINE, pick the server under *On the LAN* (or type
+the address under *Server*), CONNECT, join the room, pick a car, READY; the host presses START. The host's game
+has to stay running: when they quit, the room is gone. Right for a living room or a club evening.
+
+**A standalone server on one machine.** Unpack the tarball anywhere and run it:
 
 ```sh
+tar -xzf raceserver-0.1.0-linux-x86_64.tar.gz
+cd raceserver-0.1.0-linux-x86_64
 ./raceserver --tracks ./tracks --name "Saturday" --snapshot-hz 60
 ```
 
-Every game on the network lists it under PLAY → ONLINE → *On the LAN*. The game itself can also host
-(*Host on this PC* on the same page): no server to run at all for a couch session.
+It keeps running as players come and go, holds several rooms, and nobody's game is special. As a service that
+starts with the machine: `scripts/install.sh` (above). In Docker: `--network host`, so the announcement reaches
+the LAN.
+
+What can get in the way:
+
+- A firewall on the host must let **UDP 7777 in** (the game); on the players' machines, **UDP 7778 in** (the
+  announcement). When the announcement does not get through (a firewall, a Wi-Fi access point that isolates its
+  clients, a network that drops broadcasts), the server still works: type its address under *Server*.
+- Everyone needs the same game version: the protocol is versioned, and a mismatch is refused with a message.
+- Wi-Fi jitter matters more than bandwidth (ten cars at 60 Hz is about 47 kB/s to each player). The game adapts
+  its lead on the server's clock to the jitter it sees, but a host on a cable is the nicer evening.
 
 ## Options
 
