@@ -1,4 +1,5 @@
 # The same unit the release tarball carries; scripts/install.sh puts it in place. Settings: /etc/raceserver.env
+# (${VAR} is one argument even when empty, which raceserver would refuse: EXTRA, the free-form options, is $EXTRA)
 [Unit]
 Description=Low Poly Race server
 After=network-online.target
@@ -9,7 +10,7 @@ Type=simple
 User=raceserver
 WorkingDirectory=/opt/raceserver
 EnvironmentFile=-/etc/raceserver.env
-ExecStart=/opt/raceserver/raceserver --tracks /opt/raceserver/tracks --port ${PORT} --name "${NAME}" --password "${PASSWORD}" --rooms ${ROOMS} --snapshot-hz ${SNAPSHOT_HZ} ${EXTRA}
+ExecStart=/opt/raceserver/raceserver --tracks /opt/raceserver/tracks --port ${PORT} --name ${NAME} --password ${PASSWORD} --rooms ${ROOMS} --snapshot-hz ${SNAPSHOT_HZ} $EXTRA
 Restart=always
 RestartSec=3
 

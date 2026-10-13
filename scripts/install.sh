@@ -35,4 +35,4 @@ fi
 systemctl daemon-reload
 systemctl enable raceserver >/dev/null 2>&1 || true
 systemctl restart raceserver
-echo "raceserver $(cat /opt/raceserver/VERSION) installed: UDP port $(. /etc/raceserver.env; echo $PORT). Settings in /etc/raceserver.env; logs: journalctl -u raceserver -f"
+echo "raceserver $(cat /opt/raceserver/VERSION) installed: UDP port $(sed -n 's/^PORT=//p' /etc/raceserver.env). Settings in /etc/raceserver.env; logs: journalctl -u raceserver -f"
