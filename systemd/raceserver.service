@@ -1,0 +1,17 @@
+# The same unit the release tarball carries; scripts/install.sh puts it in place. Settings: /etc/raceserver.env
+[Unit]
+Description=Low Poly Race server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=raceserver
+WorkingDirectory=/opt/raceserver
+EnvironmentFile=-/etc/raceserver.env
+ExecStart=/opt/raceserver/raceserver --tracks /opt/raceserver/tracks --port ${PORT} --name "${NAME}" --password "${PASSWORD}" --rooms ${ROOMS} --snapshot-hz ${SNAPSHOT_HZ} ${EXTRA}
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

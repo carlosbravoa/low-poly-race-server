@@ -1,0 +1,15 @@
+# docker compose -f docker/docker-compose.yml up -d   (set RELEASE_URL in the environment or a .env file)
+services:
+  raceserver:
+    build:
+      context: .
+      args:
+        RELEASE_URL: ${RELEASE_URL}
+    restart: unless-stopped
+    ports:
+      - "7777:7777/udp"
+    environment:
+      NAME: ${NAME:-Low Poly Race}
+      PASSWORD: ${PASSWORD:-}
+      ROOMS: ${ROOMS:-8}
+      SNAPSHOT_HZ: ${SNAPSHOT_HZ:-30}

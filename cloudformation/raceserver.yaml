@@ -1,0 +1,189 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  A Low Poly Race server: one small EC2 instance in this region with a fixed public IP, the game's UDP port
+  open, the server installed from a release tarball and run as a systemd service that restarts by itself.
+  Optional: a DNS name in a Route 53 zone you own, an SSH key, a password. The output is the address to type
+  in the game (PLAY > ONLINE > Server).
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label: { default: "The server" }
+        Parameters: [ReleaseUrl, ReleaseSha256, ServerName, Password, MaxRooms, SnapshotHz, Port]
+      - Label: { default: "The machine" }
+        Parameters: [Architecture, InstanceType, KeyName, AllowedCidr]
+      - Label: { default: "A name for it (optional)" }
+        Parameters: [HostedZoneId, DnsName]
+
+Parameters:
+  ReleaseUrl:
+    Type: String
+    Description: The release tarball for this architecture (raceserver-VERSION-linux-ARCH.tar.gz), from the game's releases.
+  ReleaseSha256:
+    Type: String
+    Default: ""
+    Description: Its SHA-256 (from the .sha256 file next to it); empty skips the check.
+  ServerName:
+    Type: String
+    Default: Low Poly Race
+    Description: What the players see in the lobby.
+  Password:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Players must type it to get in; empty lets anyone in.
+  MaxRooms:
+    Type: Number
+    Default: 8
+    MinValue: 1
+    MaxValue: 32
+    Description: Races at once (a ten-car room costs about a tenth of a vCPU).
+  SnapshotHz:
+    Type: Number
+    Default: 30
+    AllowedValues: [20, 30, 60]
+    Description: Snapshots a second to each player (30 over the internet).
+  Port:
+    Type: Number
+    Default: 7777
+    MinValue: 1024
+    MaxValue: 65535
+    Description: The game's UDP port.
+  Architecture:
+    Type: String
+    Default: arm64
+    AllowedValues: [arm64, x86_64]
+    Description: Must match the tarball. arm64 (Graviton, t4g) is the cheaper one.
+  InstanceType:
+    Type: String
+    Default: t4g.small
+    Description: t4g.* for arm64 (t4g.small is plenty for a club), t3.* for x86_64.
+  KeyName:
+    Type: String
+    Default: ""
+    Description: An EC2 key pair for SSH (optional; Session Manager works without one).
+  AllowedCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: Who may reach the game port (0.0.0.0/0 is everyone; narrow it for a private server).
+    AllowedPattern: ^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$
+  HostedZoneId:
+    Type: String
+    Default: ""
+    Description: A Route 53 hosted zone of yours, to give the server a name (optional).
+  DnsName:
+    Type: String
+    Default: ""
+    Description: The name in that zone, e.g. race.example.com (optional).
+
+Mappings:
+  AmiParameter:
+    arm64: { Name: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 }
+    x86_64: { Name: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 }
+
+Conditions:
+  HasKey: !Not [!Equals [!Ref KeyName, ""]]
+  HasDns: !And [!Not [!Equals [!Ref HostedZoneId, ""]], !Not [!Equals [!Ref DnsName, ""]]]
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Low Poly Race server - the game's UDP port, and SSH when a key is given
+      SecurityGroupIngress:
+        - IpProtocol: udp
+          FromPort: !Ref Port
+          ToPort: !Ref Port
+          CidrIp: !Ref AllowedCidr
+          Description: the game
+        - !If
+          - HasKey
+          - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: !Ref AllowedCidr, Description: ssh }
+          - !Ref AWS::NoValue
+      Tags:
+        - { Key: Name, Value: !Sub "${AWS::StackName}-raceserver" }
+
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore   # a shell from the console without SSH
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref Role]
+
+  # the latest Amazon Linux 2023 image for the architecture, looked up in SSM at deploy time
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Sub
+        - "{{resolve:ssm:${ParamName}}}"
+        - ParamName: !FindInMap [AmiParameter, !Ref Architecture, Name]
+      InstanceType: !Ref InstanceType
+      KeyName: !If [HasKey, !Ref KeyName, !Ref AWS::NoValue]
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroupIds: [!Ref SecurityGroup]
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 8, VolumeType: gp3, DeleteOnTermination: true }
+      Tags:
+        - { Key: Name, Value: !Sub "${AWS::StackName}-raceserver" }
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > >(tee /var/log/raceserver-install.log) 2>&1
+          dnf -y -q update || true
+          dnf -y -q install tar gzip curl || true
+          cat > /etc/raceserver.env <<ENV
+          PORT=${Port}
+          NAME=${ServerName}
+          PASSWORD=${Password}
+          ROOMS=${MaxRooms}
+          SNAPSHOT_HZ=${SnapshotHz}
+          EXTRA=--no-beacon
+          ENV
+          chmod 600 /etc/raceserver.env
+          curl -fsSL -o /usr/local/bin/raceserver-install https://raw.githubusercontent.com/cbravo/low-poly-race-server/main/scripts/install.sh
+          chmod +x /usr/local/bin/raceserver-install
+          /usr/local/bin/raceserver-install "${ReleaseUrl}" "${ReleaseSha256}"
+          # a weekly look for a newer tarball is left to you: rerun raceserver-install with the new URL
+
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref Instance
+      Tags:
+        - { Key: Name, Value: !Sub "${AWS::StackName}-raceserver" }
+
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasDns
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DnsName
+      Type: A
+      TTL: 60
+      ResourceRecords: [!Ref ElasticIp]
+
+Outputs:
+  ServerAddress:
+    Description: Type this in the game (PLAY > ONLINE > Server)
+    Value: !If
+      - HasDns
+      - !Sub "${DnsName}:${Port}"
+      - !Sub "${ElasticIp}:${Port}"
+  PublicIp:
+    Value: !Ref ElasticIp
+  InstanceId:
+    Description: For a shell from the console (Session Manager) and the install log at /var/log/raceserver-install.log
+    Value: !Ref Instance
