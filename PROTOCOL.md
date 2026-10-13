@@ -59,7 +59,7 @@ n u8 members (id u32, name str, model u8, paint u8, AssistSettings, ready bool, 
 CarState (78 bytes): pos, quat, vel, angvel, steer sunit (road-wheel angle, rad), four wheel speeds i16 (×20
 rad/s), four suspension compressions u8 (×500 m), contact u8 (bit i: wheel i on the ground), surface u8, engine
 speed u16 (×20 rad/s), gear i8, throttle unit, brake unit, slip u8 (×60, the worst tire over its peak), flags
-u8 (1 ghost, 2 finished), hold u8 (tenths of a second the car is still held), position u8, crossings u8,
+u8 (1 ghost, 2 finished), hold u16 (ticks the car is still held), position u8, crossings u8,
 station f32, lastCross f32, bestLap f32, lastLap f32, finishTime f32.
 
 ## Time
