@@ -1,10 +1,10 @@
 # Low Poly Race — hosting a server
 
-Everything needed to run a [Low Poly Race](https://github.com/cbravo/low-poly-race) server for your friends,
+Everything needed to run a [Low Poly Race](https://github.com/carlosbravoa/low-poly-race) server for your friends,
 your club or your LAN: on AWS with one CloudFormation template, in Docker, on any Linux box as a service, or
 straight from a terminal. The server itself is a single static binary in a release tarball
-(`raceserver-VERSION-linux-ARCH.tar.gz`), built from the game's source, published with its SHA-256 on the game's
-releases page. This repository holds no game code: the templates, the scripts, the service unit and the wire
+(`raceserver-VERSION-linux-ARCH.tar.gz`), built from the game's source and published with its SHA-256 on
+[this repository's releases page](https://github.com/carlosbravoa/low-poly-race-server/releases). This repository holds no game code: the templates, the scripts, the service unit and the wire
 protocol.
 
 What a server does: players connect from the game (PLAY → ONLINE), meet in the lobby, open rooms, pick their
@@ -17,7 +17,7 @@ smallest instances hold several.
 
 1. Open the CloudFormation console in the region nearest the players (the ping is the game), **Create stack**,
    upload `cloudformation/raceserver.yaml`.
-2. Fill in: the release tarball's URL and its SHA-256 (from the game's releases page; pick the `arm64` one with
+2. Fill in: the release tarball's URL and its SHA-256 (from the releases page here; pick the `arm64` one with
    the default `t4g.small`, or the `x86_64` one with a `t3.small`), a server name, a password if it is not for
    everyone.
 3. Optional: a Route 53 hosted zone and a name (`race.example.com`), an SSH key pair, a narrower `AllowedCidr`.
