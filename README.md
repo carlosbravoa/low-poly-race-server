@@ -89,7 +89,7 @@ What can get in the way:
 ## A series of races
 
 In a room, the host's *Races* row sets 1 (one race on the chosen track) or 2 to 10: a series of that many
-races on tracks the server draws at random, with points for the top ten (12-10-8-6-5-4-3-2-1) across the
+races on tracks the server draws at random, with points for the top nine (12-10-8-6-5-4-3-2-1) across the
 races, the standings in the room between them and a champion at the end. START after the last race begins a
 new series on new tracks. Changing *Races* starts the series over.
 
