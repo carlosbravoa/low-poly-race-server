@@ -1,4 +1,4 @@
-# The wire protocol (version 2)
+# The wire protocol (version 3)
 
 UDP, through [ENet](https://github.com/zpl-c/enet) (the single-header fork): two channels, 0 reliable (the lobby,
 the rooms, a race's start and end, penalties, chat), 1 unreliable sequenced (snapshots) or unsequenced (inputs,
@@ -18,7 +18,7 @@ implied) then the other three as i16 scaled by 32767/0.70711; `unit` a byte for 
 
 | type | name | fields |
 |---|---|---|
-| 1 | HELLO | version u32 (1), name str, password str, token u32 (0, or the one from a WELCOME to come back after a drop) |
+| 1 | HELLO | version u32 (3), name str, password str, token u32 (0, or the one from a WELCOME to come back after a drop) |
 | 2 | CREATE_ROOM | RoomSettings |
 | 3 | JOIN_ROOM | room u32 |
 | 4 | LEAVE_ROOM | |
@@ -27,7 +27,7 @@ implied) then the other three as i16 scaled by 32767/0.70711; `unit` a byte for 
 | 7 | START | (the host, while the room forms) |
 | 8 | CHAT | text str |
 | 9 | LOADED | (the track is loaded: the lights may go) |
-| 10 | INPUT | tick u32 (of the newest), n u8, then n inputs oldest first: steer sunit, throttle unit, brake unit, handbrake unit, flags u8 (1 shift up, 2 shift down, 4 reset) |
+| 10 | INPUT | tick u32 (of the newest), n u8, then n inputs oldest first: steer sunit, throttle unit, brake unit, handbrake unit, flags u8 (1 shift up, 2 shift down, 4 reset, 8 nitro held) |
 | 11 | RESET | (the reset button; the game sends it in the input's flags instead) |
 | 12 | PING | stamp u32 |
 | 13 | ROOM_SETTINGS | RoomSettings (the host, while the room forms; everyone's ready flag is cleared) |
@@ -59,10 +59,10 @@ n u8 members (id u32, name str, model u8, paint u8, AssistSettings, ready bool, 
 race u8 (a series: races run so far), next str (a series: the next race's track), n u8 standings (name str,
 points u16, wins u8, human bool), best first.
 
-CarState (78 bytes): pos, quat, vel, angvel, steer sunit (road-wheel angle, rad), four wheel speeds i16 (×20
+CarState (79 bytes): pos, quat, vel, angvel, steer sunit (road-wheel angle, rad), four wheel speeds i16 (×20
 rad/s), four suspension compressions u8 (×500 m), contact u8 (bit i: wheel i on the ground), surface u8, engine
 speed u16 (×20 rad/s), gear i8, throttle unit, brake unit, slip u8 (×60, the worst tire over its peak), flags
-u8 (1 ghost, 2 finished), hold u16 (ticks the car is still held), position u8, crossings u8,
+u8 (1 ghost, 2 finished, 4 nitro burning), nitro tank u8 (×250, 0..1; the arcade model's cars), hold u16 (ticks the car is still held), position u8, crossings u8,
 station f32, lastCross f32, bestLap f32, lastLap f32, finishTime f32.
 
 ## Time
