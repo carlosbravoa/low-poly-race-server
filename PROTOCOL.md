@@ -52,7 +52,7 @@ brakeReverse bool, speedSteer f32, steerRate f32, understeerControl f32, overste
 | 70 | RACE_END | n u8 results (name str, position u8, finished bool, finishTime f32, bestLap f32, seat i8, points u8 — a series' points for the place) |
 | 71 | PONG | stamp u32 |
 | 72 | SAY | who str, text str |
-| 73 | PENALTY | kind u8 (0 reset, 1 big crash, 2 heavy crash, 3 third big crash), g f32, hold f32 s, bigCount u8 |
+| 73 | PENALTY | kind u8 (0 reset, 1 big crash, 2 heavy crash, 3 third big crash, 4 contact warning, 5 third contact), g f32 (a contact: closing speed / 9.81), hold f32 s, bigCount u8 (a contact: the warnings so far) |
 
 RoomInfo: id u32, host u32 (a player id), RoomSettings, phase u8 (0 forming, 1 loading, 2 racing, 3 results),
 n u8 members (id u32, name str, model u8, paint u8, AssistSettings, ready bool, seat i8), lap u8, leader str,
