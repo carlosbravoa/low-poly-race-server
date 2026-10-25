@@ -35,7 +35,7 @@ new release: a shell on the instance, `raceserver-install NEW_URL NEW_SHA256`. T
 
 ```sh
 curl -fsSLO https://raw.githubusercontent.com/carlosbravoa/low-poly-race-server/main/scripts/install.sh
-sudo sh install.sh https://.../raceserver-1.4.5-linux-x86_64.tar.gz SHA256
+sudo sh install.sh https://.../raceserver-1.4.6-linux-x86_64.tar.gz SHA256
 ```
 
 The server runs as the `raceserver` user from `/opt/raceserver`, as a service. Open UDP 7777 on the box's
@@ -45,7 +45,7 @@ firewall (and forward it on the router for players outside). Settings: `/etc/rac
 ## In Docker
 
 ```sh
-docker build --build-arg RELEASE_URL=https://.../raceserver-1.4.5-linux-x86_64.tar.gz -t lowpolyrace/server docker/
+docker build --build-arg RELEASE_URL=https://.../raceserver-1.4.6-linux-x86_64.tar.gz -t lowpolyrace/server docker/
 docker run -d --name raceserver --restart unless-stopped -p 7777:7777/udp -e NAME="My server" lowpolyrace/server
 ```
 
@@ -68,8 +68,8 @@ has to stay running: when they quit, the room is gone. Right for a living room o
 **A standalone server on one machine.** Unpack the tarball anywhere and run it:
 
 ```sh
-tar -xzf raceserver-1.4.5-linux-x86_64.tar.gz
-cd raceserver-1.4.5-linux-x86_64
+tar -xzf raceserver-1.4.6-linux-x86_64.tar.gz
+cd raceserver-1.4.6-linux-x86_64
 ./raceserver --tracks ./tracks --name "Saturday" --snapshot-hz 60
 ```
 
