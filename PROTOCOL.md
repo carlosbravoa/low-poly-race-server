@@ -1,4 +1,4 @@
-# The wire protocol (version 3)
+# The wire protocol (version 5)
 
 UDP, through [ENet](https://github.com/zpl-c/enet) (the single-header fork): two channels, 0 reliable (the lobby,
 the rooms, a race's start and end, penalties, chat), 1 unreliable sequenced (snapshots) or unsequenced (inputs,
@@ -18,7 +18,7 @@ implied) then the other three as i16 scaled by 32767/0.70711; `unit` a byte for 
 
 | type | name | fields |
 |---|---|---|
-| 1 | HELLO | version u32 (3), name str, password str, token u32 (0, or the one from a WELCOME to come back after a drop) |
+| 1 | HELLO | version u32 (5), name str, password str, token u32 (0, or the one from a WELCOME to come back after a drop) |
 | 2 | CREATE_ROOM | RoomSettings |
 | 3 | JOIN_ROOM | room u32 |
 | 4 | LEAVE_ROOM | |
@@ -37,7 +37,8 @@ simulation), contact u8 (0 real, 1 arcade bumps, 2 ghost), aiFill bool, aiLevel 
 races u8 (1: one race on `track`; more: a series of that many on tracks the server draws at random).
 
 AssistSettings: steering f32, counterSteer f32, stability f32, esc f32, tcs bool, abs bool, autoShift bool,
-brakeReverse bool, speedSteer f32, steerRate f32, understeerControl f32, oversteerControl f32.
+brakeReverse bool, speedSteer f32, steerRate f32, understeerControl f32, oversteerControl f32,
+escDeadband f32, escSlipFree f32 (version 4: the stability control's margins, so the server runs the same ESC the game predicts).
 
 ## Server → game
 
@@ -62,7 +63,7 @@ points u16, wins u8, human bool), best first.
 CarState (79 bytes): pos, quat, vel, angvel, steer sunit (road-wheel angle, rad), four wheel speeds i16 (×20
 rad/s), four suspension compressions u8 (×500 m), contact u8 (bit i: wheel i on the ground), surface u8, engine
 speed u16 (×20 rad/s), gear i8, throttle unit, brake unit, slip u8 (×60, the worst tire over its peak), flags
-u8 (1 ghost, 2 finished, 4 nitro burning), nitro tank u8 (×250, 0..1; the arcade model's cars), hold u16 (ticks the car is still held), position u8, crossings u8,
+u8 (1 ghost, 2 finished, 4 nitro burning, 8 the rev limiter's cut on; version 5), nitro tank u8 (×250, 0..1; the arcade model's cars), hold u16 (ticks the car is still held), position u8, crossings u8,
 station f32, lastCross f32, bestLap f32, lastLap f32, finishTime f32.
 
 ## Time
